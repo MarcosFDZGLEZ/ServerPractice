@@ -3,6 +3,9 @@ import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import mongoSanitize from 'express-mongo-sanitize';
 import userRouter from './routes/user.routes.js';
+import clientRouter from './routes/client.routes.js';
+import projectRouter from './routes/project.routes.js';
+import deliverynoteRouter from './routes/deliverynote.routes.js';
 import { errorHandler } from './middleware/error-handler.js';
 import { AppError } from './utils/AppError.js';
 
@@ -37,6 +40,9 @@ app.use('/uploads', express.static('uploads'));
 
 // 5. Rutas
 app.use('/api/user', userRouter);
+app.use('/api/client', clientRouter);
+app.use('/api/project', projectRouter);
+app.use('/api/deliverynote', deliverynoteRouter);
 
 // 6. Manejo de rutas no encontradas (Sintaxis Express 5)
 app.all('{*path}', (req, res, next) => {
