@@ -14,7 +14,7 @@ export const validationSchema = z.object({
   code: z.string().length(6)
 });
 
-// Este es el que te falta para la línea 21 de tus rutas:
+
 export const onboardingSchema = z.object({
   name: z.string().min(2),
   lastName: z.string().min(2),
