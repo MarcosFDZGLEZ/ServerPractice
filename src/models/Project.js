@@ -1,7 +1,4 @@
 import mongoose from "mongoose";
-import { use } from "react";
-import { email, union } from "zod";
-import { required } from "zod/mini";
 
 const clientSchema = new mongoose.Schema(
     {

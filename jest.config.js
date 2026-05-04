@@ -1,0 +1,26 @@
+export default {
+  testEnvironment: 'node',
+  testMatch: ['**/tests/**/*.test.js'],
+  collectCoverageFrom: [
+    'src/**/*.js',
+    '!src/index.js',
+    '!src/config/**',
+  ],
+  coveragePathIgnorePatterns: [
+    '/node_modules/',
+    '/tests/',
+  ],
+  coverageThreshold: {
+    global: {
+      branches: 70,
+      functions: 70,
+      lines: 70,
+      statements: 70,
+    },
+  },
+  setupFiles: ['<rootDir>/tests/setupEnv.js'],
+  setupFilesAfterEnv: ['<rootDir>/tests/setup.js'],
+  testTimeout: 30000,
+  verbose: true,
+  transform: {},
+};

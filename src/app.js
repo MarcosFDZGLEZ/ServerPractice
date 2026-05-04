@@ -2,6 +2,8 @@ import express from 'express';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import mongoSanitize from 'express-mongo-sanitize';
+import swaggerUi from 'swagger-ui-express';
+import swaggerSpec from './config/swagger.js';
 import userRouter from './routes/user.routes.js';
 import clientRouter from './routes/client.routes.js';
 import projectRouter from './routes/project.routes.js';
@@ -36,20 +38,27 @@ app.use((req, res, next) => {
 });
 
 // 4. Archivos estáticos
-app.use('/uploads', express.static('uploads')); 
+app.use('/uploads', express.static('uploads'));
 
-// 5. Rutas
+// 5. Swagger Documentation
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, { 
+  swaggerOptions: { 
+    persistAuthorization: true 
+  } 
+}));
+
+// 6. Rutas
 app.use('/api/user', userRouter);
 app.use('/api/client', clientRouter);
 app.use('/api/project', projectRouter);
 app.use('/api/deliverynote', deliverynoteRouter);
 
-// 6. Manejo de rutas no encontradas (Sintaxis Express 5)
+// 7. Manejo de rutas no encontradas (Sintaxis Express 5)
 app.all('{*path}', (req, res, next) => {
   next(new AppError(`It cannot be found ${req.originalUrl} on this server`, 404));
 });
 
-// 7. Middleware de errores centralizado
+// 8. Middleware de errores centralizado
 app.use(errorHandler);
 
 export default app;
