@@ -147,7 +147,7 @@ export const updateClient = async (req, res, next) => {
       },
       req.body,
       {
-        new: true,
+        returnDocument: 'after',
         runValidators: true
       }
     );
@@ -171,7 +171,7 @@ export const restoreClient = async (req, res, next) => {
     const client = await Client.findOneAndUpdate(
       { _id: req.params.id, company: req.user.company, deleted: true },
       { deleted: false },
-      { new: true }
+      { returnDocument: 'after' }
     );
 
     if (!client) {
@@ -197,7 +197,7 @@ export const deleteClient = async (req, res, next) => {
       client = await Client.findOneAndUpdate(
         { _id: req.params.id, company: req.user.company },
         { deleted: true },
-        { new: true }
+        { returnDocument: 'after' }
       );
     } else {
       client = await Client.findOneAndDelete({ _id: req.params.id, company: req.user.company });

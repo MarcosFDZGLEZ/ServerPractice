@@ -243,10 +243,12 @@ export const downloadDeliveryNotePdf = async (req, res, next) => {
 
 export const signDeliveryNote = async (req, res, next) => {
   try {
+    // 1. Authorization check
     if (!req.user || !req.user.company) {
       throw new AppError('Authenticated user and company are required', 401);
     }
 
+    // 2. Fetch the delivery note and verify ownership
     const deliveryNote = await DeliveryNote.findOne({
       _id: req.params.id,
       company: req.user.company,
@@ -257,17 +259,36 @@ export const signDeliveryNote = async (req, res, next) => {
       throw new AppError('Delivery note not found', 404);
     }
 
+    // 3. Status check
     if (deliveryNote.signed) {
       throw new AppError('Delivery note is already signed', 400);
     }
 
-    deliveryNote.signatureData = req.body.signatureData;
+    // 4. Strict Signature Validation (Fixes image_3b4ce2.png)
+    const { signatureData } = req.body;
+    
+    // Regex ensures the string starts with a valid data URI header
+    const base64Regex = /^data:image\/(png|jpg|jpeg);base64,/;
+
+    if (!signatureData || typeof signatureData !== 'string' || !base64Regex.test(signatureData)) {
+      throw new AppError('Invalid signature data format. A valid base64 image is required.', 400);
+    }
+
+    // 5. Update data
+    deliveryNote.signatureData = signatureData;
     deliveryNote.signed = true;
     deliveryNote.signedAt = new Date();
+
+    // 6. Generate PDF with updated signature data
+    // Ensure generatePdf is an async function that returns the file path
     deliveryNote.pdfPath = await generatePdf(deliveryNote);
+
+    // 7. Persist changes
     await deliveryNote.save();
 
+    // 8. Respond (Including _id and populated fields as expected by tests)
     res.status(200).json(deliveryNote);
+
   } catch (error) {
     next(error);
   }
@@ -279,11 +300,10 @@ export const deleteDeliveryNote = async (req, res, next) => {
       throw new AppError('Authenticated user and company are required', 401);
     }
 
-    const deliveryNote = await DeliveryNote.findOne({
-      _id: req.params.id,
-      company: req.user.company,
-      deleted: false
-    });
+    const isSoft = req.query.soft !== 'false'; // Default to soft delete if parameter is present
+    const query = { _id: req.params.id, company: req.user.company, deleted: false };
+
+    const deliveryNote = await DeliveryNote.findOne(query);
 
     if (!deliveryNote) {
       throw new AppError('Delivery note not found', 404);
@@ -293,12 +313,11 @@ export const deleteDeliveryNote = async (req, res, next) => {
       throw new AppError('Signed delivery notes cannot be deleted', 400);
     }
 
-    const hardDelete = req.query.hard === 'true';
-    if (hardDelete) {
-      await deliveryNote.deleteOne();
-    } else {
+    if (isSoft) {
       deliveryNote.deleted = true;
       await deliveryNote.save();
+    } else {
+      await deliveryNote.deleteOne();
     }
 
     res.status(204).send();

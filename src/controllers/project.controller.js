@@ -170,7 +170,7 @@ export const updateProject = async (req, res, next) => {
         const project = await Project.findOneAndUpdate(
             { _id: req.params.id, company: req.user.company },
             req.body,
-            { new: true, runValidators: true }
+            { returnDocument: 'after', runValidators: true }
         );
 
         if (!project) {
@@ -196,7 +196,7 @@ export const deleteProject = async (req, res, next) => {
             project = await Project.findOneAndUpdate(
                 { _id: req.params.id, company: req.user.company },
                 { deleted: true },
-                { new: true }
+                { returnDocument: 'after' }
             );
         } else {
             project = await Project.findOneAndDelete({ _id: req.params.id, company: req.user.company });
@@ -221,7 +221,7 @@ export const restoreProject = async (req, res, next) => {
         const project = await Project.findOneAndUpdate(
             { _id: req.params.id, company: req.user.company, deleted: true },
             { deleted: false },
-            { new: true }
+            { returnDocument: 'after' }
         );
 
         if (!project) {

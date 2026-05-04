@@ -16,12 +16,15 @@ const app = express();
 // 1. Seguridad Global: Helmet y Rate Limit
 app.use(helmet()); 
 
-const limiter = rateLimit({
-  windowMs: 60 * 60 * 1000, // 1 hora
-  max: 100, 
-  message: 'Too many requests from this IP address, please try again in an hour.'
-});
-app.use('/api', limiter);
+// Only apply rate limiting if we are NOT in the test environment
+if (process.env.NODE_ENV !== 'test') {
+  const limiter = rateLimit({
+    windowMs: 60 * 60 * 1000, // 1 hora
+    max: 100, 
+    message: 'Too many requests from this IP address, please try again in an hour.'
+  });
+  app.use('/api', limiter);
+}
 
 // 2. Middlewares de parseo 
 app.use(express.json({ limit: '10kb' })); // Permite leer req.body

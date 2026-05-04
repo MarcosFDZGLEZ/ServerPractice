@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-const clientSchema = new mongoose.Schema(
+const projectSchema = new mongoose.Schema(
     {
         user: {
             type: mongoose.Schema.Types.ObjectId,
@@ -91,5 +91,5 @@ const clientSchema = new mongoose.Schema(
     }
 );
 
-const Project = mongoose.model('Project', clientSchema);
+const Project = mongoose.model('Project', projectSchema);
 export default Project;

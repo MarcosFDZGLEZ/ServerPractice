@@ -2,17 +2,21 @@ import request from 'supertest';
 import app from '../src/app.js';
 import Client from '../src/models/Client.js';
 
+const extractResults = (body) => body.projects ?? body;
+
 describe('Project Endpoints', () => {
   let token;
   let companyId;
   let clientId;
+  let userEmail;
 
   beforeEach(async () => {
     // Register user
+    userEmail = `project-test-${Date.now()}@example.com`;
     const authResponse = await request(app)
       .post('/api/user/register')
       .send({
-        email: `project-test-${Date.now()}@example.com`,
+        email: userEmail,
         password: 'SecurePassword123',
       });
 
@@ -35,7 +39,19 @@ describe('Project Endpoints', () => {
         },
       });
 
+    expect(companyResponse.status).toBe(200);
     companyId = companyResponse.body._id;
+
+    // Login again to get token with company populated
+    const loginResponse = await request(app)
+      .post('/api/user/login')
+      .send({
+        email: userEmail,
+        password: 'SecurePassword123',
+      });
+
+    expect(loginResponse.status).toBe(200);
+    token = loginResponse.body.accessToken;
 
     // Create client
     const clientResponse = await request(app)
@@ -55,6 +71,7 @@ describe('Project Endpoints', () => {
         },
       });
 
+    expect(clientResponse.status).toBe(201);
     clientId = clientResponse.body._id;
   });
 
@@ -188,8 +205,9 @@ describe('Project Endpoints', () => {
         .set('Authorization', `Bearer ${token}`);
 
       expect(response.status).toBe(200);
-      expect(Array.isArray(response.body)).toBe(true);
-      expect(response.body.length).toBe(3);
+      expect(Array.isArray(response.body.projects)).toBe(true);
+      expect(response.body.projects.length).toBe(3);
+      expect(response.body.results).toBe(3);
     });
 
     it('should filter projects by client', async () => {
@@ -198,8 +216,8 @@ describe('Project Endpoints', () => {
         .set('Authorization', `Bearer ${token}`);
 
       expect(response.status).toBe(200);
-      expect(response.body.length).toBe(3);
-      response.body.forEach(project => {
+      expect(response.body.projects.length).toBe(3);
+      response.body.projects.forEach(project => {
         expect(project.client).toBe(clientId);
       });
     });
@@ -210,7 +228,8 @@ describe('Project Endpoints', () => {
         .set('Authorization', `Bearer ${token}`);
 
       expect(response.status).toBe(200);
-      expect(response.body.length).toBeLessThanOrEqual(2);
+      expect(response.body.projects.length).toBeLessThanOrEqual(2);
+      expect(response.body.currentPage).toBe(1);
     });
   });
 
@@ -250,7 +269,7 @@ describe('Project Endpoints', () => {
 
     it('should fail with invalid ID', async () => {
       const response = await request(app)
-        .get('/api/project/invalid-id')
+        .get('/api/project/000000000000000000000000')
         .set('Authorization', `Bearer ${token}`);
 
       expect(response.status).toBe(404);
@@ -286,7 +305,17 @@ describe('Project Endpoints', () => {
         .put(`/api/project/${projectId}`)
         .set('Authorization', `Bearer ${token}`)
         .send({
+          client: clientId,
           name: 'Updated Project Name',
+          projectCode: `UPDATE-${Date.now()}`,
+          address: {
+            street: 'Updated Street',
+            number: '10',
+            postal: '28005',
+            city: 'Madrid',
+            province: 'Madrid',
+          },
+          email: 'updatedproject@example.com',
           notes: 'Updated notes',
           active: false,
         });
@@ -321,20 +350,34 @@ describe('Project Endpoints', () => {
       projectId = response.body._id;
     });
 
-    it('should soft delete (archive) project', async () => {
+    it('should hard delete project by default', async () => {
       const response = await request(app)
         .delete(`/api/project/${projectId}`)
         .set('Authorization', `Bearer ${token}`);
 
-      expect(response.status).toBe(200);
+      expect(response.status).toBe(204);
 
-      // Verify project is not in active list
       const listResponse = await request(app)
         .get('/api/project')
         .set('Authorization', `Bearer ${token}`);
 
-      const found = listResponse.body.find(p => p._id === projectId);
+      const found = listResponse.body.projects.find(p => p._id === projectId);
       expect(found).toBeUndefined();
+    });
+
+    it('should soft delete project when soft=true', async () => {
+      const response = await request(app)
+        .delete(`/api/project/${projectId}?soft=true`)
+        .set('Authorization', `Bearer ${token}`);
+
+      expect(response.status).toBe(204);
+
+      const archivedResponse = await request(app)
+        .get('/api/project/archived')
+        .set('Authorization', `Bearer ${token}`);
+
+      const found = archivedResponse.body.projects.find(p => p._id === projectId);
+      expect(found).toBeDefined();
     });
   });
 
@@ -363,7 +406,7 @@ describe('Project Endpoints', () => {
 
       // Archive the project
       await request(app)
-        .delete(`/api/project/${projectId}`)
+        .delete(`/api/project/${projectId}?soft=true`)
         .set('Authorization', `Bearer ${token}`);
     });
 
@@ -373,7 +416,8 @@ describe('Project Endpoints', () => {
         .set('Authorization', `Bearer ${token}`);
 
       expect(response.status).toBe(200);
-      const found = response.body.find(p => p._id === projectId);
+      expect(Array.isArray(response.body.projects)).toBe(true);
+      const found = response.body.projects.find(p => p._id === projectId);
       expect(found).toBeDefined();
     });
   });
@@ -403,7 +447,7 @@ describe('Project Endpoints', () => {
 
       // Archive the project
       await request(app)
-        .delete(`/api/project/${projectId}`)
+        .delete(`/api/project/${projectId}?soft=true`)
         .set('Authorization', `Bearer ${token}`);
     });
 
@@ -414,6 +458,13 @@ describe('Project Endpoints', () => {
 
       expect(response.status).toBe(200);
       expect(response.body.deleted).toBe(false);
+
+      const listResponse = await request(app)
+        .get('/api/project')
+        .set('Authorization', `Bearer ${token}`);
+
+      const found = listResponse.body.projects.find(p => p._id === projectId);
+      expect(found).toBeDefined();
     });
   });
 });

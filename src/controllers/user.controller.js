@@ -36,7 +36,12 @@ export const register = async (req, res, next) => {
     userEvents.emit('user:registered', newUser);
 
     res.status(201).json({
-      user: { email: newUser.email, status: newUser.status, role: newUser.role },
+      user: { 
+        _id: newUser._id, // Add this line to satisfy the test
+        email: newUser.email, 
+        status: newUser.status, 
+        role: newUser.role 
+      },
       accessToken,
       refreshToken
     });
@@ -88,7 +93,7 @@ export const login = async (req, res, next) => {
 // --- 4. ONBOARDING: DATOS PERSONALES ---
 export const updatePersonalData = async (req, res, next) => {
   try {
-    const user = await User.findByIdAndUpdate(req.user.id, req.body, { new: true, runValidators: true });
+    const user = await User.findByIdAndUpdate(req.user.id, req.body, { returnDocument: 'after', runValidators: true });
     res.status(200).json(user);
   } catch (error) { next(error); }
 };

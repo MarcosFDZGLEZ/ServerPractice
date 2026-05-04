@@ -16,4 +16,12 @@ export const createProjectSchema = z.object({
     client: z.string().min(1, 'client is required')
 });
 
-export const updateProjectSchema = createProjectSchema;
+export const updateProjectSchema = z.object({
+    name: z.string().min(1, 'name is required').optional(),
+    projectCode: z.string().min(1, 'projectCode is required').optional(),
+    email: z.string().email('email is invalid').optional(),
+    address: addressSchema.optional(),
+    client: z.string().min(1, 'client is required').optional(),
+    active: z.boolean().optional(),
+    notes: z.string().max(500, 'Max length notes is 500').optional()
+});

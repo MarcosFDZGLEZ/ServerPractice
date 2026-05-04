@@ -4,17 +4,21 @@ import User from '../src/models/User.js';
 import Company from '../src/models/Company.js';
 import Client from '../src/models/Client.js';
 
+const extractResults = (body) => body.clients ?? body;
+
 describe('Client Endpoints', () => {
   let token;
   let userId;
   let companyId;
+  let userEmail;
 
   beforeEach(async () => {
     // Register and setup user
+    userEmail = `client-test-${Date.now()}@example.com`;
     const authResponse = await request(app)
       .post('/api/user/register')
       .send({
-        email: `client-test-${Date.now()}@example.com`,
+        email: userEmail,
         password: 'SecurePassword123',
       });
 
@@ -38,7 +42,19 @@ describe('Client Endpoints', () => {
         },
       });
 
+    expect(companyResponse.status).toBe(200);
     companyId = companyResponse.body._id;
+
+    // Login again to get token with company populated
+    const loginResponse = await request(app)
+      .post('/api/user/login')
+      .send({
+        email: userEmail,
+        password: 'SecurePassword123',
+      });
+
+    expect(loginResponse.status).toBe(200);
+    token = loginResponse.body.accessToken;
   });
 
   describe('POST /api/client', () => {
@@ -167,8 +183,9 @@ describe('Client Endpoints', () => {
         .set('Authorization', `Bearer ${token}`);
 
       expect(response.status).toBe(200);
-      expect(Array.isArray(response.body)).toBe(true);
-      expect(response.body.length).toBe(3);
+      expect(Array.isArray(response.body.clients)).toBe(true);
+      expect(response.body.clients.length).toBe(3);
+      expect(response.body.results).toBe(3);
     });
 
     it('should support pagination', async () => {
@@ -177,7 +194,8 @@ describe('Client Endpoints', () => {
         .set('Authorization', `Bearer ${token}`);
 
       expect(response.status).toBe(200);
-      expect(response.body.length).toBeLessThanOrEqual(2);
+      expect(response.body.clients.length).toBeLessThanOrEqual(2);
+      expect(response.body.currentPage).toBe(1);
     });
 
     it('should fail without authorization', async () => {
@@ -224,7 +242,7 @@ describe('Client Endpoints', () => {
 
     it('should fail with invalid ID', async () => {
       const response = await request(app)
-        .get('/api/client/invalid-id')
+        .get('/api/client/000000000000000000000000')
         .set('Authorization', `Bearer ${token}`);
 
       expect(response.status).toBe(404);
@@ -261,8 +279,16 @@ describe('Client Endpoints', () => {
         .set('Authorization', `Bearer ${token}`)
         .send({
           name: 'Updated Client Name',
+          cif: 'G11111111',
           email: 'updated@example.com',
           phone: '+34987654321',
+          address: {
+            street: 'Updated Street',
+            number: '10',
+            postal: '28005',
+            city: 'Madrid',
+            province: 'Madrid',
+          },
         });
 
       expect(response.status).toBe(200);
@@ -271,12 +297,13 @@ describe('Client Endpoints', () => {
     });
 
     it('should fail with invalid ID', async () => {
+      const nonExistentId = '65f1a2b3c4d5e6f7a8b9c0d1';
       const response = await request(app)
-        .put('/api/client/invalid-id')
+        .put('/api/client/${nonExistentId}')
         .set('Authorization', `Bearer ${token}`)
         .send({ name: 'Updated' });
 
-      expect(response.status).toBe(404);
+      expect(response.status).toBe(400);
     });
   });
 
@@ -304,20 +331,35 @@ describe('Client Endpoints', () => {
       clientId = response.body._id;
     });
 
-    it('should soft delete (archive) client', async () => {
+    it('should hard delete client by default', async () => {
       const response = await request(app)
         .delete(`/api/client/${clientId}`)
         .set('Authorization', `Bearer ${token}`);
 
-      expect(response.status).toBe(200);
+      expect(response.status).toBe(204);
 
       // Verify client is not in active list
       const listResponse = await request(app)
         .get('/api/client')
         .set('Authorization', `Bearer ${token}`);
 
-      const found = listResponse.body.find(c => c._id === clientId);
+      const found = listResponse.body.clients.find(c => c._id === clientId);
       expect(found).toBeUndefined();
+    });
+
+    it('should soft delete client when soft=true', async () => {
+      const response = await request(app)
+        .delete(`/api/client/${clientId}?soft=true`)
+        .set('Authorization', `Bearer ${token}`);
+
+      expect(response.status).toBe(204);
+
+      const archivedResponse = await request(app)
+        .get('/api/client/archived')
+        .set('Authorization', `Bearer ${token}`);
+
+      const found = archivedResponse.body.clients.find(c => c._id === clientId);
+      expect(found).toBeDefined();
     });
   });
 
@@ -346,7 +388,7 @@ describe('Client Endpoints', () => {
 
       // Archive the client
       await request(app)
-        .delete(`/api/client/${clientId}`)
+        .delete(`/api/client/${clientId}?soft=true`)
         .set('Authorization', `Bearer ${token}`);
     });
 
@@ -356,7 +398,8 @@ describe('Client Endpoints', () => {
         .set('Authorization', `Bearer ${token}`);
 
       expect(response.status).toBe(200);
-      const found = response.body.find(c => c._id === clientId);
+      expect(Array.isArray(response.body.clients)).toBe(true);
+      const found = response.body.clients.find(c => c._id === clientId);
       expect(found).toBeDefined();
     });
   });
@@ -386,7 +429,7 @@ describe('Client Endpoints', () => {
 
       // Archive the client
       await request(app)
-        .delete(`/api/client/${clientId}`)
+        .delete(`/api/client/${clientId}?soft=true`)
         .set('Authorization', `Bearer ${token}`);
     });
 
@@ -403,7 +446,7 @@ describe('Client Endpoints', () => {
         .get('/api/client')
         .set('Authorization', `Bearer ${token}`);
 
-      const found = listResponse.body.find(c => c._id === clientId);
+      const found = listResponse.body.clients.find(c => c._id === clientId);
       expect(found).toBeDefined();
     });
   });

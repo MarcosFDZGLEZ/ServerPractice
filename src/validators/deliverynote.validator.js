@@ -29,10 +29,16 @@ export const createDeliveryNoteSchema = z.object({
   }
 
   if (data.format === 'hours') {
-    if (data.hours === undefined && (!data.workers || data.workers.length === 0)) {
+    if (data.hours === undefined) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: 'hours or workers are required when format is hours'
+        message: 'hours are required when format is hours'
+      });
+    }
+    if (!data.workers || data.workers.length === 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'workers are required when format is hours'
       });
     }
   }

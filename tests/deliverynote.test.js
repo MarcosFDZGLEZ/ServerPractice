@@ -1,17 +1,21 @@
 import request from 'supertest';
 import app from '../src/app.js';
 
+const extractResults = (body) => body.deliveryNotes ?? body;
+
 describe('DeliveryNote Endpoints', () => {
   let token;
   let clientId;
   let projectId;
+  let userEmail;
 
   beforeEach(async () => {
     // Register user
+    userEmail = `deliverynote-test-${Date.now()}@example.com`;
     const authResponse = await request(app)
       .post('/api/user/register')
       .send({
-        email: `deliverynote-test-${Date.now()}@example.com`,
+        email: userEmail,
         password: 'SecurePassword123',
       });
 
@@ -33,6 +37,17 @@ describe('DeliveryNote Endpoints', () => {
           province: 'Madrid',
         },
       });
+
+    // Login again to get token with company populated
+    const loginResponse = await request(app)
+      .post('/api/user/login')
+      .send({
+        email: userEmail,
+        password: 'SecurePassword123',
+      });
+
+    expect(loginResponse.status).toBe(200);
+    token = loginResponse.body.accessToken;
 
     // Create client
     const clientResponse = await request(app)
@@ -215,8 +230,9 @@ describe('DeliveryNote Endpoints', () => {
         .set('Authorization', `Bearer ${token}`);
 
       expect(response.status).toBe(200);
-      expect(Array.isArray(response.body)).toBe(true);
-      expect(response.body.length).toBe(2);
+      expect(Array.isArray(response.body.deliveryNotes)).toBe(true);
+      expect(response.body.deliveryNotes.length).toBe(2);
+      expect(response.body.results).toBe(2);
     });
 
     it('should filter delivery notes by project', async () => {
@@ -225,8 +241,8 @@ describe('DeliveryNote Endpoints', () => {
         .set('Authorization', `Bearer ${token}`);
 
       expect(response.status).toBe(200);
-      response.body.forEach(note => {
-        expect(note.project).toBe(projectId);
+      response.body.deliveryNotes.forEach(note => {
+        expect(note.project._id || note.project).toBe(projectId);
       });
     });
 
@@ -236,7 +252,8 @@ describe('DeliveryNote Endpoints', () => {
         .set('Authorization', `Bearer ${token}`);
 
       expect(response.status).toBe(200);
-      expect(response.body.length).toBeLessThanOrEqual(1);
+      expect(response.body.deliveryNotes.length).toBeLessThanOrEqual(1);
+      expect(response.body.currentPage).toBe(1);
     });
   });
 
@@ -273,7 +290,7 @@ describe('DeliveryNote Endpoints', () => {
 
     it('should fail with invalid ID', async () => {
       const response = await request(app)
-        .get('/api/deliverynote/invalid-id')
+        .get('/api/deliverynote/000000000000000000000000')
         .set('Authorization', `Bearer ${token}`);
 
       expect(response.status).toBe(404);
@@ -369,7 +386,7 @@ describe('DeliveryNote Endpoints', () => {
 
     it('should fail with invalid ID', async () => {
       const response = await request(app)
-        .get('/api/deliverynote/pdf/invalid-id')
+        .get('/api/deliverynote/pdf/000000000000000000000000')
         .set('Authorization', `Bearer ${token}`);
 
       expect(response.status).toBe(404);
@@ -402,11 +419,73 @@ describe('DeliveryNote Endpoints', () => {
         .delete(`/api/deliverynote/${deliveryNoteId}`)
         .set('Authorization', `Bearer ${token}`);
 
-      expect(response.status).toBe(200);
+      expect(response.status).toBe(204);
 
       // Verify note is deleted
       const getResponse = await request(app)
         .get(`/api/deliverynote/${deliveryNoteId}`)
+        .set('Authorization', `Bearer ${token}`);
+
+      expect(getResponse.status).toBe(404);
+    });
+
+    it('should fail to delete signed delivery note', async () => {
+      const signedResponse = await request(app)
+        .post('/api/deliverynote')
+        .set('Authorization', `Bearer ${token}`)
+        .send({
+          client: clientId,
+          project: projectId,
+          format: 'material',
+          description: 'Signed Delete Test',
+          workDate: new Date().toISOString(),
+          material: 'Delete Material',
+          quantity: 40,
+          unit: 'units',
+        });
+
+      const signedId = signedResponse.body._id;
+
+      await request(app)
+        .patch(`/api/deliverynote/${signedId}/sign`)
+        .set('Authorization', `Bearer ${token}`)
+        .send({
+          signatureData: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
+        });
+
+      const response = await request(app)
+        .delete(`/api/deliverynote/${signedId}`)
+        .set('Authorization', `Bearer ${token}`);
+
+      expect(response.status).toBe(400);
+      expect(response.body.message).toMatch(/signed delivery notes cannot be deleted/i);
+    });
+
+    it('should hard delete delivery note when hard=true', async () => {
+      const hardDeleteResponse = await request(app)
+        .post('/api/deliverynote')
+        .set('Authorization', `Bearer ${token}`)
+        .send({
+          client: clientId,
+          project: projectId,
+          format: 'material',
+          description: 'Hard Delete Test',
+          workDate: new Date().toISOString(),
+          material: 'Delete Material',
+          quantity: 40,
+          unit: 'units',
+        });
+
+      const hardDeleteId = hardDeleteResponse.body._id;
+
+      const response = await request(app)
+        .delete(`/api/deliverynote/${hardDeleteId}?hard=true`)
+        .set('Authorization', `Bearer ${token}`);
+
+      expect(response.status).toBe(204);
+
+      const getResponse = await request(app)
+        .get(`/api/deliverynote/${hardDeleteId}`)
         .set('Authorization', `Bearer ${token}`);
 
       expect(getResponse.status).toBe(404);
