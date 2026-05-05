@@ -106,6 +106,41 @@ Follow this specific order in Postman to ensure a successful testing flow.
 
 ---
 
+---
+
+## Manual API Testing (`requests.http`)
+
+For a faster alternative to Postman, you can use the `requests.http` file included in the root directory. This allows you to run requests directly from your code editor.
+
+### 1. Prerequisites
+*   **VS Code**: Install the **REST Client** extension by Huachao Mao.
+*   **JetBrains IDEs**: No extension needed (built-in support).
+*   **Server**: Ensure your local server is running (`npm run dev`).
+
+### 2. How to Test the Flow
+The API follows a strict logical order. You must "chain" your requests by updating the variables at the top of the `.http` file after each successful step:
+
+1.  **Authentication Chain**:
+    *   Execute **Register**. Check your terminal/console for the 6-digit verification code.
+    *   Execute **Verify Email** using that code.
+    *   Execute **Login** to receive your `accessToken`.
+    *   **CRITICAL**: Copy the `accessToken` from the response and paste it into the `@accessToken` variable at the top of the file.
+
+2.  **Resource Chain**:
+    *   **Onboarding**: Complete the personal and company data requests.
+    *   **Create Client**: Once created, copy the `_id` from the response and update the `@clientId` variable.
+    *   **Create Project**: Use the client ID to create a project, then copy the new project `_id` to the `@projectId` variable.
+    *   **Delivery Notes**: You can now create and sign delivery notes using the IDs stored in your variables.
+
+### 3. Troubleshooting Common Errors
+*   **404 Not Found**: Ensure your `@baseUrl` matches the routes in `app.js` (e.g., `/api/user` instead of `/api/v1/users`).
+*   **400 Bad Request**: Check the response message. This usually means a Zod validation failed (missing fields like `cif` or `email`) or you are trying to delete a **signed** delivery note.
+*   **500 Internal Server Error**: Usually caused by an invalid ID format. Ensure your variables (like `{{clientId}}`) do not contain extra curly braces or placeholder dots.
+
+---
+
+
+
 ## Technical Specifications
 * **Authentication**: Stateless JWT implementation.
 * **Event Driven**: Uses `EventEmitter` for post-registration logic.

@@ -1,0 +1,298 @@
+### Global Variables
+@baseUrl = http://localhost:3000/api
+@accessToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5ZmExYWZjZDEyZTc3Y2RlMGQzMTk1NSIsImlhdCI6MTc3Nzk5ODcxMSwiZXhwIjoxNzc4MDA1OTExfQ.GJMzijIYaUEggnNQkgGaMUFji8fUbluk4ggWnHNcBaE
+@refreshToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5ZmExYWZjZDEyZTc3Y2RlMGQzMTk1NSIsImlhdCI6MTc3Nzk5ODU4OCwiZXhwIjoxNzc4NjAzMzg4fQ.hPI_uldkm8lNcRsOJXE9mkOPzq66rXoTM0rL-e6WH2U
+
+# IDs to be filled after creation
+@clientId = 69fa1bb5d12e77cde0d31956
+@projectId = 69fa1cb2d12e77cde0d31958
+@deliveryNoteId = 69fa1cd6d12e77cde0d31959
+
+#################################################################
+# 1. USER & AUTHENTICATION (user.routes_3.js)
+#################################################################
+
+### Register a New User
+# Schema: email (string), password (min 8 chars)
+POST {{baseUrl}}/user/register
+Content-Type: application/json
+
+{
+  "email": "test_user@company.com",
+  "password": "SecurePassword123!"
+}
+
+### Login
+POST {{baseUrl}}/user/login
+Content-Type: application/json
+
+{
+  "email": "test_user@company.com",
+  "password": "SecurePassword123!"
+}
+
+### Verify Email
+# Schema: code (exactly 6 digits)
+PUT {{baseUrl}}/user/validation
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "code": "800998"
+}
+
+### Onboarding: Personal Data
+# Schema: name, lastName, nif
+PUT {{baseUrl}}/user/onboarding
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "name": "John",
+  "lastName": "Doe",
+  "nif": "12345678X"
+}
+
+### Onboarding: Company Data
+# Schema: name, cif, isFreelance, address object
+PATCH {{baseUrl}}/user/company
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "name": "Acme Construction",
+  "cif": "B12345678",
+  "isFreelance": false,
+  "address": {
+    "street": "Main Industrial Way",
+    "number": "10",
+    "postal": "28001",
+    "city": "Madrid",
+    "province": "Madrid"
+  }
+}
+
+### Refresh Token
+POST {{baseUrl}}/user/refresh
+Content-Type: application/json
+
+{
+  "refreshToken": "{{refreshToken}}"
+}
+
+### Get My Profile
+GET {{baseUrl}}/user/
+Authorization: Bearer {{accessToken}}
+
+### Invite User (Admin Only)
+POST {{baseUrl}}/user/invite
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "email": "colleague@company.com"
+}
+
+### Logout
+POST {{baseUrl}}/user/logout
+Authorization: Bearer {{accessToken}}
+
+
+#################################################################
+# 2. CLIENT MANAGEMENT (client.routes_2.js)
+#################################################################
+
+### Create Client
+# Schema: Includes mandatory nested address object
+POST {{baseUrl}}/client/
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "name": "Global Supplies SL",
+  "cif": "B99887766",
+  "email": "billing@globalsupplies.com",
+  "phone": "600111222",
+  "address": {
+    "street": "Distribution Road",
+    "number": "45",
+    "postal": "08005",
+    "city": "Barcelona",
+    "province": "Barcelona"
+  }
+}
+
+### Get All Clients (with pagination/sort)
+GET {{baseUrl}}/client/?page=1&limit=10&sort=-createdAt
+Authorization: Bearer {{accessToken}}
+
+### Get Single Client
+GET {{baseUrl}}/client/{{clientId}}
+Authorization: Bearer {{accessToken}}
+
+### Get Archived Clients
+GET {{baseUrl}}/client/archived
+Authorization: Bearer {{accessToken}}
+
+### Update Client
+PUT {{baseUrl}}/client/{{clientId}}
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "name": "Global Supplies SL",
+  "cif": "B99887766",           
+  "email": "info@global.com",    
+  "phone": "600111222",
+  "address": {
+    "street": "Distribution Road",
+    "number": "45",
+    "postal": "08005",
+    "city": "Barcelona",
+    "province": "Barcelona"
+  }
+}
+
+### Restore Client
+PATCH {{baseUrl}}/client/{{clientId}}/restore
+Authorization: Bearer {{accessToken}}
+
+### Soft Delete Client
+DELETE {{baseUrl}}/client/{{clientId}}?soft=true
+Authorization: Bearer {{accessToken}}
+
+### Hard Delete Client
+DELETE {{baseUrl}}/client/{{clientId}}?soft=false
+Authorization: Bearer {{accessToken}}
+
+
+#################################################################
+# 3. PROJECT MANAGEMENT (project.routes_2.js)
+#################################################################
+
+### Create Project
+# Schema: name, projectCode, email, address, client ID
+POST {{baseUrl}}/project/
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "name": "Warehouse Renovation",
+  "projectCode": "WR-2026",
+  "email": "projects@globalsupplies.com",
+  "client": "{{clientId}}",
+  "address": {
+    "street": "Industrial Zone A",
+    "number": "SN",
+    "postal": "08010",
+    "city": "Barcelona",
+    "province": "Barcelona"
+  }
+}
+
+### Get Projects (Filter by active)
+GET {{baseUrl}}/project/?active=true
+Authorization: Bearer {{accessToken}}
+
+### Get Single Project
+GET {{baseUrl}}/project/{{projectId}}
+Authorization: Bearer {{accessToken}}
+
+### Get Archived Projects
+GET {{baseUrl}}/project/archived
+Authorization: Bearer {{accessToken}}
+
+### Update Project
+PUT {{baseUrl}}/project/{{projectId}}
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "notes": "Adding extra phase to construction",
+  "active": true
+}
+
+### Restore Project
+PATCH {{baseUrl}}/project/{{projectId}}/restore
+Authorization: Bearer {{accessToken}}
+
+### Hard Delete Project
+DELETE {{baseUrl}}/project/{{projectId}}?soft=false
+Authorization: Bearer {{accessToken}}
+
+### Soft Delete Project
+DELETE {{baseUrl}}/project/{{projectId}}?soft=true
+Authorization: Bearer {{accessToken}}
+
+
+#################################################################
+# 4. DELIVERY NOTES (deliverynote.routes_2.js)
+#################################################################
+
+### Create Delivery Note (MATERIAL Format)
+# SuperRefine: requires material, quantity, unit
+POST {{baseUrl}}/deliverynote/
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "client": "{{clientId}}",
+  "project": "{{projectId}}",
+  "format": "material",
+  "description": "Delivery of reinforcement steel",
+  "workDate": "2026-05-10",
+  "material": "Steel Beams",
+  "quantity": 25,
+  "unit": "units"
+}
+
+### Create Delivery Note (HOURS Format)
+# SuperRefine: requires hours, workers array
+POST {{baseUrl}}/deliverynote/
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "client": "{{clientId}}",
+  "project": "{{projectId}}",
+  "format": "hours",
+  "description": "Structural assessment",
+  "workDate": "2026-05-11",
+  "hours": 8,
+  "workers": [
+    { "name": "Alice Expert", "hours": 4 },
+    { "name": "Bob Junior", "hours": 4 }
+  ]
+}
+
+### Get Delivery Notes (Filter by date)
+GET {{baseUrl}}/deliverynote/?from=2026-05-01&to=2026-05-31
+Authorization: Bearer {{accessToken}}
+
+### Get Single Delivery Note
+GET {{baseUrl}}/deliverynote/{{deliveryNoteId}}
+Authorization: Bearer {{accessToken}}
+
+### Sign Delivery Note
+# Schema: signatureData is a base64 string
+PATCH {{baseUrl}}/deliverynote/{{deliveryNoteId}}/sign
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "signatureData": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=="
+}
+
+### Download PDF
+GET {{baseUrl}}/deliverynote/pdf/{{deliveryNoteId}}
+Authorization: Bearer {{accessToken}}
+
+### Hard Delete Delivery Note
+# Note: Signed notes cannot be deleted
+DELETE {{baseUrl}}/deliverynote/{{deliveryNoteId}}?soft=false
+Authorization: Bearer {{accessToken}}
+
+### Soft Delete Delivery Note
+# Note: Signed notes cannot be deleted
+DELETE {{baseUrl}}/deliverynote/{{deliveryNoteId}}?soft=true
+Authorization: Bearer {{accessToken}}
