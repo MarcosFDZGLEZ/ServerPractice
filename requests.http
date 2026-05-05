@@ -1,7 +1,7 @@
 ### Global Variables
 @baseUrl = http://localhost:3000/api
-@accessToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5ZmExYWZjZDEyZTc3Y2RlMGQzMTk1NSIsImlhdCI6MTc3Nzk5ODcxMSwiZXhwIjoxNzc4MDA1OTExfQ.GJMzijIYaUEggnNQkgGaMUFji8fUbluk4ggWnHNcBaE
-@refreshToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5ZmExYWZjZDEyZTc3Y2RlMGQzMTk1NSIsImlhdCI6MTc3Nzk5ODU4OCwiZXhwIjoxNzc4NjAzMzg4fQ.hPI_uldkm8lNcRsOJXE9mkOPzq66rXoTM0rL-e6WH2U
+@accessToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5ZmEyNWQyYzE5OGEwZGE3OWE1NTJlYiIsImlhdCI6MTc3ODAwMjYxMSwiZXhwIjoxNzc4MDA5ODExfQ.dbxIEZiQeeEt2O6ilpE5WS5rHdjc-jh8ftety36Bhkc
+@refreshToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5ZmEyNWQyYzE5OGEwZGE3OWE1NTJlYiIsImlhdCI6MTc3ODAwMjU3OSwiZXhwIjoxNzc4NjA3Mzc5fQ.P3CfcriQBHOEO9dYLEyOcTpSzPVBihNJ0Y9UYNNxY0g
 
 # IDs to be filled after creation
 @clientId = 69fa1bb5d12e77cde0d31956
@@ -38,7 +38,7 @@ Authorization: Bearer {{accessToken}}
 Content-Type: application/json
 
 {
-  "code": "800998"
+  "code": "899235"
 }
 
 ### Onboarding: Personal Data
@@ -96,6 +96,15 @@ Content-Type: application/json
 ### Logout
 POST {{baseUrl}}/user/logout
 Authorization: Bearer {{accessToken}}
+
+### Hard Delete Account
+DELETE {{baseUrl}}/user/?soft=false
+Authorization: Bearer {{accessToken}}
+
+## Soft Delete Account
+DELETE {{baseUrl}}/user/?soft=true
+Authorization: Bearer {{accessToken}}
+
 
 
 #################################################################
@@ -163,6 +172,10 @@ Authorization: Bearer {{accessToken}}
 
 ### Hard Delete Client
 DELETE {{baseUrl}}/client/{{clientId}}?soft=false
+Authorization: Bearer {{accessToken}}
+
+### Forzing a 5xx Error (for testing Logger)
+GET {{baseUrl}}/client/69invalidID123
 Authorization: Bearer {{accessToken}}
 
 
