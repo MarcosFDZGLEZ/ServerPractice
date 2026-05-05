@@ -1,4 +1,3 @@
-I have updated your **README.md** to reflect the new testing setup and the clean repository structure. It now includes instructions for the `setupEnv.js` file and how to check your progress toward the **70% coverage goal**[cite: 1].
 
 ---
 
@@ -14,7 +13,7 @@ This is a REST API developed with **Node.js**, **Express**, and **MongoDB**. It 
    ```
 
 2. **Environment Variables:**
-   Create a `.env` file in the root directory and configure the following parameters:[cite: 3]
+   Create a `.env` file in the root directory and configure the following parameters:
    
 ```env
    PORT=3000
@@ -32,7 +31,7 @@ This is a REST API developed with **Node.js**, **Express**, and **MongoDB**. It 
    cp tests/setupEnv.example.js tests/setupEnv.js
    ```
 
-4. **File System Preparation:**[cite: 3]
+4. **File System Preparation:**
    Create the folder for uploads:
    ```bash
    mkdir uploads
@@ -48,7 +47,7 @@ npm run dev
 ```
 
 ### Run Tests
-To verify the logic in your controllers and check coverage:[cite: 1]
+To verify the logic in your controllers and check coverage:
 ```bash
 # Run all tests
 npm test
@@ -56,31 +55,31 @@ npm test
 # Generate coverage report
 npm run test:coverage
 ```
-*Current Goal: 70% Statement and Branch coverage.*[cite: 1]
+*Current Goal: 70% Statement and Branch coverage.*
 
 ---
 
 ## API Endpoints and Testing Order
 
-Follow this specific order in Postman to ensure a successful testing flow.[cite: 3]
+Follow this specific order in Postman to ensure a successful testing flow.
 
-### 1. Registration and Security[cite: 3]
+### 1. Registration and Security
 * **POST `/api/user/register`**: Creates a new account. The verification code is printed in the terminal.
 * **PUT `/api/user/validation`**: Submit the 6-digit code to verify the email.
 * **POST `/api/user/login`**: Authenticate and receive `accessToken` and `refreshToken`.
 
-### 2. Onboarding (Requires JWT Token)[cite: 3]
+### 2. Onboarding (Requires JWT Token)
 * **PUT `/api/user/register`**: Update personal profile data.
 * **PATCH `/api/user/company`**: Register company details (First user becomes Admin).
 * **PATCH `/api/user/logo`**: Upload the company logo (use `form-data` with key `logo`).
 
-### 3. Management and Administration[cite: 3]
+### 3. Management and Administration
 * **GET `/api/user`**: Retrieve full user profile.
 * **POST `/api/user/invite`**: Admin only. Invite members via email.
 * **POST `/api/user/refresh`**: Refresh access token.
 * **POST `/api/user/logout`**: Invalidate session.
 
-### 4. Deletion (T6 Pattern)[cite: 3]
+### 4. Deletion (T6 Pattern)
 * **DELETE `/api/user?soft=true`**: Logical delete (`deleted: true`).
 * **DELETE `/api/user`**: Physical database removal.
 
@@ -107,10 +106,10 @@ Follow this specific order in Postman to ensure a successful testing flow.[cite:
 
 ---
 
-## Technical Specifications[cite: 3]
+## Technical Specifications
 * **Authentication**: Stateless JWT implementation.
 * **Event Driven**: Uses `EventEmitter` for post-registration logic.
 * **File Handling**: `Multer` middleware for multipart/form-data.
 * **Security**: Password hashing with `bcryptjs`.
-* **Code Quality**: Testing suite with Istanbul/NYC coverage reporting.[cite: 1]
+* **Code Quality**: Testing suite with Istanbul/NYC coverage reporting.
 ```
