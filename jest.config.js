@@ -4,6 +4,7 @@ export default {
   collectCoverageFrom: [
     'src/**/*.js',
     '!src/index.js',
+    '!src/socket.js',
     '!src/config/**',
   ],
   coveragePathIgnorePatterns: [

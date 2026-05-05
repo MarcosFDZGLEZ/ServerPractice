@@ -1,5 +1,6 @@
 import Client from '../models/Client.js';
 import { AppError } from '../utils/AppError.js';
+import { emitToCompany } from '../socket.js';
 
 const buildQuery = (company, includeDeleted = false, filterName) => {
   const query = { company };
@@ -35,6 +36,7 @@ export const createClient = async (req, res, next) => {
       address
     });
 
+    emitToCompany(req.user.company, 'client:new', client);
     res.status(201).json(client);
   } catch (error) {
     next(error);

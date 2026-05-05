@@ -1,6 +1,7 @@
 import Project from '../models/Project.js';
 import Client from '../models/Client.js';
 import { AppError } from '../utils/AppError.js';
+import { emitToCompany } from '../socket.js';
 
 const buildQuery = (company, includeDeleted = false, filterName, filterClient, filterActive) => {
     const query = { company, deleted: includeDeleted };
@@ -55,6 +56,7 @@ export const createProject = async (req, res, next) => {
             email
         });
 
+        emitToCompany(req.user.company, 'project:new', project);
         res.status(201).json(project);
     } catch (error) {
         next(error);
