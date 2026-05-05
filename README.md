@@ -1,3 +1,7 @@
+I have updated your **README.md** to reflect the new testing setup and the clean repository structure. It now includes instructions for the `setupEnv.js` file and how to check your progress toward the **70% coverage goal**[cite: 1].
+
+---
+
 # User and Company Management API
 
 This is a REST API developed with **Node.js**, **Express**, and **MongoDB**. It manages the complete lifecycle of a user, including registration, email validation, company onboarding, and session management via JWT.
@@ -10,8 +14,9 @@ This is a REST API developed with **Node.js**, **Express**, and **MongoDB**. It 
    ```
 
 2. **Environment Variables:**
-   Create a `.env` file in the root directory and configure the following parameters:
-   ```env
+   Create a `.env` file in the root directory and configure the following parameters:[cite: 3]
+   
+```env
    PORT=3000
    MONGODB_URI=your_mongodb_atlas_connection_string
    JWT_SECRET=your_access_token_secret
@@ -20,51 +25,92 @@ This is a REST API developed with **Node.js**, **Express**, and **MongoDB**. It 
    JWT_REFRESH_EXPIRES_IN=7d
    ```
 
-3. **File System Preparation:**
-   You must manually create the folder where logos will be stored for the upload middleware to function:
+3. **Testing Environment Setup:**
+   To run tests, copy the example environment file and customize it:
+   
+```bash
+   cp tests/setupEnv.example.js tests/setupEnv.js
+   ```
+
+4. **File System Preparation:**[cite: 3]
+   Create the folder for uploads:
    ```bash
    mkdir uploads
    ```
 
-## Execution
+---
 
-To start the server in development mode (using `nodemon`):
+## Execution & Testing
 
+### Development Mode
 ```bash
 npm run dev
 ```
-The server will be available at: `http://localhost:3000`
+
+### Run Tests
+To verify the logic in your controllers and check coverage:[cite: 1]
+```bash
+# Run all tests
+npm test
+
+# Generate coverage report
+npm run test:coverage
+```
+*Current Goal: 70% Statement and Branch coverage.*[cite: 1]
 
 ---
 
 ## API Endpoints and Testing Order
 
-Follow this specific order in Postman to ensure a successful testing flow.
+Follow this specific order in Postman to ensure a successful testing flow.[cite: 3]
 
-### 1. Registration and Security
-* **POST `/api/user/register`**: Creates a new account. The verification code is printed in the **VS Code terminal**.
+### 1. Registration and Security[cite: 3]
+* **POST `/api/user/register`**: Creates a new account. The verification code is printed in the terminal.
 * **PUT `/api/user/validation`**: Submit the 6-digit code to verify the email.
 * **POST `/api/user/login`**: Authenticate and receive `accessToken` and `refreshToken`.
 
-### 2. Onboarding (Requires JWT Token)
-* **PUT `/api/user/register`**: Update personal profile data (`name`, `lastName`, `nif`).
-* **PATCH `/api/user/company`**: Register company details. The first user to register the company is assigned the **Admin** role.
-* **PATCH `/api/user/logo`**: Upload the company logo using `form-data` with the key `logo`.
+### 2. Onboarding (Requires JWT Token)[cite: 3]
+* **PUT `/api/user/register`**: Update personal profile data.
+* **PATCH `/api/user/company`**: Register company details (First user becomes Admin).
+* **PATCH `/api/user/logo`**: Upload the company logo (use `form-data` with key `logo`).
 
-### 3. Management and Administration
-* **GET `/api/user`**: Retrieve the full user profile with populated company information.
-* **POST `/api/user/invite`**: Allows an **Admin** to invite new members via email.
-* **POST `/api/user/refresh`**: Generate a new access token using the refresh token.
-* **POST `/api/user/logout`**: Terminate the session and invalidate tokens.
+### 3. Management and Administration[cite: 3]
+* **GET `/api/user`**: Retrieve full user profile.
+* **POST `/api/user/invite`**: Admin only. Invite members via email.
+* **POST `/api/user/refresh`**: Refresh access token.
+* **POST `/api/user/logout`**: Invalidate session.
 
-### 4. Deletion (T6 Pattern)
-* **DELETE `/api/user?soft=true`**: Performs a logical delete by setting `deleted: true`.
-* **DELETE `/api/user`**: Performs a physical delete from the database.
+### 4. Deletion (T6 Pattern)[cite: 3]
+* **DELETE `/api/user?soft=true`**: Logical delete (`deleted: true`).
+* **DELETE `/api/user`**: Physical database removal.
+
+### 5. Client Management
+* **POST `/api/client`**: Create a new client profile.
+* **GET `/api/client`**: List all clients associated with the company.
+* **GET `/api/client/:id`**: Retrieve specific client details.
+* **PUT `/api/client/:id`**: Update client information.
+* **DELETE `/api/client/:id`**: Remove a client.
+
+### 6. Project Management
+* **POST `/api/project`**: Create a new project for a specific client.
+* **GET `/api/project`**: List all company projects.
+* **GET `/api/project/:id`**: Get detailed project information.
+* **PATCH `/api/project/:id`**: Update project status or details.
+* **DELETE `/api/project/:id`**: Remove a project.
+
+### 7. Delivery Notes (Logistics)
+* **POST `/api/deliverynote`**: Generate a new delivery note for a project.
+* **GET `/api/deliverynote`**: Fetch all delivery notes.
+* **GET `/api/deliverynote/:id`**: View a specific delivery note.
+* **PUT `/api/deliverynote/:id`**: Edit delivery note details.
+* **DELETE `/api/deliverynote/:id`**: Delete a delivery note.
 
 ---
 
-## Technical Specifications
-* **Authentication**: Stateless JWT implementation with Access and Refresh tokens.
-* **Event Driven**: Uses `EventEmitter` to handle post-registration logic (e.g., logging verification codes).
-* **File Handling**: `Multer` middleware for processing multipart/form-data.
-* **Security**: Password hashing with `bcryptjs` and role-based access control (RBAC).
+## Technical Specifications[cite: 3]
+* **Authentication**: Stateless JWT implementation.
+* **Event Driven**: Uses `EventEmitter` for post-registration logic.
+* **File Handling**: `Multer` middleware for multipart/form-data.
+* **Security**: Password hashing with `bcryptjs`.
+* **Code Quality**: Testing suite with Istanbul/NYC coverage reporting.[cite: 1]
+```
