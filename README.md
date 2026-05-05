@@ -39,6 +39,10 @@ This is a REST API developed with **Node.js**, **Express**, and **MongoDB**. It 
 
 ---
 
+## API Documentation
+Once the server is running, you can access the interactive **Swagger** documentation here:
+*   **Local UI**: [http://localhost:3000/api-docs]
+
 ## Execution & Testing
 
 ### Development Mode
