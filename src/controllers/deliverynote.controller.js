@@ -183,7 +183,7 @@ export const signDeliveryNote = async (req, res, next) => {
       throw new AppError('Delivery note is already signed', 400);
     }
 
-    // 4. Strict Signature Validation (Fixes image_3b4ce2.png)
+    // 4. Strict Signature Validation
     const { signatureData } = req.body;
     
     // Regex ensures the string starts with a valid data URI header
